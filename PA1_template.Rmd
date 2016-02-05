@@ -10,7 +10,7 @@ The data set of qualified self movement was initially downloaded from [here](htt
 First I read the data
 
 ```{r}
-rawData <- read.csv("../Data/raw_data.csv")
+rawData <- read.csv("Data/raw_data.csv")
 ```
 
 # Total Number of Steps Each Day
@@ -34,9 +34,9 @@ Median steps = `r medianStepsOnDay`
 
 # Average Daily Pattern
 ```{r}
-stepsInteavl <- subset(rawData, !is.na(rawData$steps), select=c("interval", "steps"))
+stepsInteavl <- subset(rawData, select=c("interval", "steps"))
 
-averageStepsInteval <- aggregate(stepsInteavl[c("steps")], by=list(stepsInteavl$interval), FUN=mean, 1)
+averageStepsInteval <- aggregate(stepsInteavl[c("steps")], by=list(stepsInteavl$interval), FUN=mean, na.rm = TRUE)
 
 plot(averageStepsInteval$Group.1, averageStepsInteval$steps, type="l", main = "Average Daily Pattern", xlab = "Time", ylab = "Steps")
 
@@ -89,8 +89,8 @@ dataWithSimulatedValues$IsWeekend <- weekdays.Date(as.Date(dataWithSimulatedValu
 weekendData <- subset(dataWithSimulatedValues, dataWithSimulatedValues$IsWeekend, select=c("interval", "steps"))
 weekdayData <- subset(dataWithSimulatedValues, !dataWithSimulatedValues$IsWeekend, select=c("interval", "steps"))
 
-averageStepsIntevalWeekend <- aggregate(weekendData[c("steps")], by=list(weekendData$interval), FUN=mean, 1)
-averageStepsIntevalWeekday <- aggregate(weekdayData[c("steps")], by=list(weekdayData$interval), FUN=mean, 1)
+averageStepsIntevalWeekend <- aggregate(weekendData[c("steps")], by=list(weekendData$interval), FUN=mean, 1, na.rm = TRUE)
+averageStepsIntevalWeekday <- aggregate(weekdayData[c("steps")], by=list(weekdayData$interval), FUN=mean, 1, na.rm = TRUE)
 
 par(mfrow=c(2,1))
 plot(averageStepsIntevalWeekend$Group.1, averageStepsIntevalWeekend$steps, type="l", main = "Weekend Daily Pattern", xlab = "Time", ylab = "Steps")
