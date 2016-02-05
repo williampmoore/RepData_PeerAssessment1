@@ -1,25 +1,98 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducable Reasearch Coursework 1"
+author: "William Moore"
+date: "February 5, 2016"
+output: html_document
 ---
 
+# Read the data
+The data set of qualified self movement was initially downloaded from [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) on 2016-02-05.  
+First I read the data
 
-## Loading and preprocessing the data
+```{r}
+rawData <- read.csv("../Data/raw_data.csv")
+```
+
+# Total Number of Steps Each Day
+The histogram below shows a histogram of the total number of steps taken each day
+
+```{r}
+stepsOnDay <- subset(rawData, !is.na(rawData$steps), select=c("date", "steps"))
+stepsOnDay$date <- as.Date(stepsOnDay$date)
+
+totalStepsOnDay <- aggregate(stepsOnDay[c("steps")], by=list(stepsOnDay$date), FUN=sum, 1)
+
+hist(totalStepsOnDay$steps, main = "Total Steps", xlab = "Days with Count Total Steps", ylab = "Number of Days", breaks = 20)
+
+meanStepsOnDay <- mean(totalStepsOnDay$steps)
+medianStepsOnDay <- median(totalStepsOnDay$steps)
+```
+
+Mean steps = `r meanStepsOnDay`  
+Median steps = `r medianStepsOnDay` 
 
 
+# Average Daily Pattern
+```{r}
+stepsInteavl <- subset(rawData, !is.na(rawData$steps), select=c("interval", "steps"))
 
-## What is mean total number of steps taken per day?
+averageStepsInteval <- aggregate(stepsInteavl[c("steps")], by=list(stepsInteavl$interval), FUN=mean, 1)
 
+plot(averageStepsInteval$Group.1, averageStepsInteval$steps, type="l", main = "Average Daily Pattern", xlab = "Time", ylab = "Steps")
 
+maxInteval <- which.max(averageStepsInteval$steps)
+maxIntevalTime <- averageStepsInteval$Group.1[maxInteval]
+maxIntevalValue <- averageStepsInteval$steps[maxInteval]
+```
 
-## What is the average daily activity pattern?
+The inteval with the most steps was `r maxIntevalTime`. There were average steps of `r maxIntevalValue`.  
 
+# Missing Values
+Here we simulate the missing values in the original data set using the average value from that time inteval on all other days.  
 
+```{r}
+totalMissingValues <- length(rawData$steps) - length(stepsInteavl$steps)
 
-## Imputing missing values
+dataWithSimulatedValues <- rawData
 
+for (i in 1:length(dataWithSimulatedValues$steps))
+{
+    if(is.na(dataWithSimulatedValues$steps[i])){
+        index <- Position(function(y){y == dataWithSimulatedValues$interval[i]}, averageStepsInteval$Group.1)
+        dataWithSimulatedValues$steps[i] <- averageStepsInteval$steps[index]
+    }
+}
+```
 
+The total missing values from the original data set was `r totalMissingValues`  
+We now plot with the simulated values
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+stepsOnDay <- subset(dataWithSimulatedValues, select=c("date", "steps"))
+stepsOnDay$date <- as.Date(stepsOnDay$date)
+
+totalStepsOnDay <- aggregate(stepsOnDay[c("steps")], by=list(stepsOnDay$date), FUN=sum, 1)
+
+hist(totalStepsOnDay$steps, main = "Total Steps", xlab = "Days with Count Total Steps", ylab = "Number of Days", breaks = 20)
+
+meanStepsOnDay <- mean(totalStepsOnDay$steps)
+medianStepsOnDay <- median(totalStepsOnDay$steps)
+```
+
+Mean steps = `r meanStepsOnDay`  
+Median steps = `r medianStepsOnDay` 
+
+# Differance Between Weekdays and Weekends
+```{r}
+dataWithSimulatedValues$IsWeekend <- weekdays.Date(as.Date(dataWithSimulatedValues$date)) == "Saturday" | weekdays.Date(as.Date(dataWithSimulatedValues$date)) == "Sunday"
+
+weekendData <- subset(dataWithSimulatedValues, dataWithSimulatedValues$IsWeekend, select=c("interval", "steps"))
+weekdayData <- subset(dataWithSimulatedValues, !dataWithSimulatedValues$IsWeekend, select=c("interval", "steps"))
+
+averageStepsIntevalWeekend <- aggregate(weekendData[c("steps")], by=list(weekendData$interval), FUN=mean, 1)
+averageStepsIntevalWeekday <- aggregate(weekdayData[c("steps")], by=list(weekdayData$interval), FUN=mean, 1)
+
+par(mfrow=c(2,1))
+plot(averageStepsIntevalWeekend$Group.1, averageStepsIntevalWeekend$steps, type="l", main = "Weekend Daily Pattern", xlab = "Time", ylab = "Steps")
+plot(averageStepsIntevalWeekday$Group.1, averageStepsIntevalWeekday$steps, type="l", main = "Weekday Daily Pattern", xlab = "Time", ylab = "Steps")
+```
